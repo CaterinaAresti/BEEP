@@ -1,108 +1,148 @@
-version: '3.3'
+version: '3.8'
 
+#Docker Networks
+networks:
+  laravel:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
+  influx_data: {}
+
+# Workflow
 services:
-  mysql:
-    image: mysql:5.7
+  nginx:
+    build:
+      context: .
+      dockerfile: ./compose/nginx/Dockerfile
+    container_name: nginx
+    ports:
+      - "8087:80"
     volumes:
-       - mysql_data:/var/lib/mysql
-    restart: always
+      - .:/var/www/html:delegated
+    depends_on:
+      - php
+      - mysql
+      - influxdb
+    networks:
+      - laravel
+
+  mysql:
+    image: mysql:5.7.29
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
     environment:
-       MYSQL_ROOT_PASSWORD: kuchen42
-       MYSQL_DATABASE: bee_data
-       MYSQL_USER: user
-       MYSQL_PASSWORD: pass
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      MYSQL_DATABASE: bee_data
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./compose/mysql/my.cnf:/etc/mysql/my.cnf
+      - dbdata:/var/lib/mysql/
+    networks:
+      - laravel
+
+  redis:
+    image: "redis:latest"
+    container_name: redis
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+    - "8088:80"
+    volumes:
+      - /sessions
+    networks:
+      - laravel
+    links:
+      - mysql
+
   influxdb:
-    image: influxdb:1.5.4-alpine
-    volumes: 
-      - influx_data:/var/lib/influxdb
+    image: influxdb:latest
+    container_name: influxdb
+    volumes:
+      - ./storage/influxdb2/config/influx-configs:/etc/influxdb2/influx-configs
+      - ./storage/influxdb2/data:/var/lib/influxdb2:rw
     healthcheck:
       test: "ln -sf /bin/busybox /bin/wget && /bin/wget -q -Y off http://localhost:8086/metrics -O /dev/null > /dev/null 2>&1"
       interval: 25s
       timeout: 3s
-    restart: always
-    environment: 
-      INFLUXDB_DB: bee_data
-      INFLUXDB_USER: user_influx
-      INFLUXDB_USER_PASSWORD: pass_influx
-  beep:
-    image: beep:dev
-    restart: always
-    stdin_open: true
-    tty: true
+    restart: unless-stopped
     ports:
-      - "8000:80"
-    volumes: 
-      - storage_data:/var/www/html/storage
+      - "8086:8086"
+    networks:
+      - laravel
+
+  php:
+    build:
+      context: .
+      dockerfile: ./compose/php/Dockerfile
+    container_name: php
+    volumes:
+      - .:/var/www/html:delegated
+    ports:
+      - "9000:9000"
+    depends_on:
+      - influxdb
+    networks:
+      - laravel
+
+  composer:
+    build:
+      context: .
+      dockerfile: ./compose/php/composer/Dockerfile
+    container_name: composer
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      - php
+    user: laravel
+    networks:
+      - laravel
+    entrypoint: ['composer', '--ignore-platform-reqs']
+
+  npm:
+    image: node:15.0.1
+    container_name: npm
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    entrypoint: ['npm']
+
+  artisan:
+    build:
+      context: .
+      dockerfile: ./compose/php/Dockerfile
+    container_name: artisan
+    volumes:
+      - .:/var/www/html:delegated
     depends_on:
       - mysql
-      - influxdb
-    environment:
-      APP_ENV: local
-      APP_KEY: ohb0jaFa8joceeDaiW3Ohcho0oMaikae # Random key with 32 characters
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8000/
-      APP_NAME: BEEP 
-      API_URL: http://localhost:8000/api/
-
-      LOG_CHANNEL: stack
-
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: bee_data
-      DB_USERNAME: user
-      DB_PASSWORD: pass
-
-      DB_DATABASE_BACKUP: bee_backup
-      DB_USERNAME_BACKUP: user
-      DB_PASSWORD_BACKUP: pass
-
-      LARAVEL_INFLUX_PROVIDER_PROTOCOL: http
-      LARAVEL_INFLUX_PROVIDER_USER: user_influx
-      LARAVEL_INFLUX_PROVIDER_PASSWORD: pass_influx
-      LARAVEL_INFLUX_PROVIDER_HOST: influxdb
-      LARAVEL_INFLUX_PROVIDER_PORT: 8086
-      LARAVEL_INFLUX_PROVIDER_DATABASE: bee_data
-
-      BROADCAST_DRIVER: log
-      CACHE_DRIVER: array
-      QUEUE_CONNECTION: sync
-      SESSION_DRIVER: file
-      SESSION_LIFETIME: 120
-
-      REDIS_HOST: 127.0.0.1
-      REDIS_PASSWORD: null
-      REDIS_PORT: 6379
-
-      MAIL_DRIVER: smtp
-      MAIL_HOST: 
-      MAIL_PORT: 
-      MAIL_USERNAME: 
-      MAIL_PASSWORD: 
-      MAIL_ENCRYPTION: ssl
-      MAIL_FROM_ADDRESS: 
-      MAIL_FROM_NAME:
-
-      PUSHER_APP_ID: 
-      PUSHER_KEY: 
-      PUSHER_SECRET: 
-      PUSHER_APP_CLUSTER: mt1
-
-      MIX_PUSHER_APP_KEY: "${PUSHER_APP_KEY}"
-      MIX_PUSHER_APP_CLUSTER: "${PUSHER_APP_CLUSTER}"
-
-      DEBUGBAR_ENABLED: "false"
-
-      WEBAPP_URL: "http://localhost:8000/webapp#!/"
-      WEBAPP_EMAIL_VERIFY_URL: login
-      WEBAPP_PASSWORD_RESET_URL: "login/reset/"
-
-      GOOGLE_MAPS_KEY: 
-volumes:
-    mysql_data: {}
-    influx_data: {}
-    storage_data: {}
+    working_dir: /var/www/html
+    user: laravel
+    entrypoint: ['php', '/var/www/html/artisan']
+    networks:
+      - laravel
