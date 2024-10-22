@@ -122,7 +122,9 @@ services:
     user: laravel
     networks:
       - laravel
-    entrypoint: ['composer', '--ignore-platform-reqs']
+    command: ['composer', 'install', '--ignore-platform-reqs']
+    environment:
+      COMPOSER_PROCESS_TIMEOUT: 600 
 
   npm:
     image: node:15.0.1
@@ -130,7 +132,8 @@ services:
     volumes:
       - .:/var/www/html
     working_dir: /var/www/html
-    entrypoint: ['npm']
+    command: npm install && npm start
+
 
   artisan:
     build:
