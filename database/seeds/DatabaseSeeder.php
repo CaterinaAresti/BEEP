@@ -14,5 +14,6 @@ class DatabaseSeeder extends Seeder
     	$this->call(DeviceCorrectionSeeder::class);
         // $this->call(UserSeeder::class);
     	// $this->call(MeasurementSeeder::class);
+        $this->call(PlanTypeSeeder::class);
     }
 }
