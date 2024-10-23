@@ -13,17 +13,22 @@ class CreatePaymentHistoryTable extends Migration
      */
     public function up()
     {
-        Schema::create('payment_history', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
-            $table->decimal('amount', 8, 2);
-            $table->enum('status', ['successful', 'failed', 'refunded']);
-            $table->timestamp('transaction_date');
-            $table->string('payment_method');
-            $table->string('stripe_payment_id')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('payment_history')) 
+        {
+            Schema::create('payment_history', function (Blueprint $table) {
+                $table->increments('id')->index();
+                $table->integer('user_id')->unsigned();
+                $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
+                $table->integer('subscription_id')->unsigned();
+                $table->foreign('subscription_id')->references('id')->on('subscriptions')->onUpdate('cascade')->onDelete('cascade');
+                $table->decimal('amount', 8, 2);
+                $table->enum('status', ['successful', 'failed', 'refunded']);
+                $table->timestamp('transaction_date');
+                $table->string('payment_method');
+                $table->string('stripe_payment_id')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

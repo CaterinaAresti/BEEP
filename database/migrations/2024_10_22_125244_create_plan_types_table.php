@@ -13,13 +13,16 @@ class CreatePlanTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('plan_types', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('name')->unique();
-            $table->text('description')->nullable();
-            $table->decimal('price', 8, 2)->nullable(); 
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('plan_types')) 
+        {
+            Schema::create('plan_types', function (Blueprint $table) {
+                $table->increments('id')->index();
+                $table->string('name')->unique();
+                $table->text('description')->nullable();
+                $table->decimal('price', 8, 2)->nullable(); 
+                $table->timestamps();
+            });
+        }
     }
 
     /**

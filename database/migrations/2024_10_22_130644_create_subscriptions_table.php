@@ -13,15 +13,20 @@ class CreateSubscriptionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('subscriptions', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('plan_type_id')->constrained('plan_types'); 
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
-            $table->enum('status', ['active', 'canceled', 'expired'])->default('active');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('subscriptions')) 
+        {
+            Schema::create('subscriptions', function (Blueprint $table) {
+                $table->increments('id')->index();
+                $table->integer('user_id')->unsigned();
+                $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
+                $table->integer('plan_type_id')->unsigned();
+                $table->foreign('plan_type_id')->references('id')->on('plan_types')->onUpdate('cascade')->onDelete('cascade'); 
+                $table->date('start_date')->nullable();
+                $table->date('end_date')->nullable();
+                $table->enum('status', ['active', 'canceled', 'expired'])->default('active');
+                $table->timestamps();
+            });
+        }
     }
 
     /**
