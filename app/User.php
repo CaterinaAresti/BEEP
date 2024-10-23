@@ -351,4 +351,8 @@ class User extends Authenticatable
         
         return Auth::user()->pluck('name','id');
     }
+
+    public function subscriptions() {
+        return $this->hasMany(Subscription::class);
+    }
 }

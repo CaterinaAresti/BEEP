@@ -21,7 +21,7 @@ class CheckSubscription
         
         $user = $request->user();
 
-        if (!$user) {
+        if (!$user) {   
             // Handling of unauthenticated users
             return redirect()->route('login');
         }
