@@ -144,4 +144,11 @@ Route::group([], function()
 		Route::get('weather', 				'Api\WeatherController@index');
 	});
 
+	// Subscription
+	Route::group(['middleware' => ['auth', 'check.subscription:2']], function () {
+		// Routes that require a specific plan type (e.g., Pro)
+		Route::get('/pro-feature', [ProFeatureController::class, 'index']);
+	});
+	
+
 });
