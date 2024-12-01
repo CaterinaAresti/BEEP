@@ -58,6 +58,18 @@ class LocationController extends Controller
      */
     public function store(Request $request)
     {
+        // Get the user's current apiaries
+        $apiaries = Apiary::where('user_id', auth()->id())->get();
+
+        // Get the apiary limit
+        $limit = $this->getApiaryLimit();
+
+        // Check if the user has reached the limit
+        if ($limit !== null && $apiaries->count() >= $limit) {
+            // Return an error message
+            return response()->json(['error' => 'You have reached the maximum number of apiaries.'], 422);
+        }
+        
         $validator = Validator::make($request->only('name','hive_type_id'),
         [
             'name'          => 'required|string',
@@ -111,6 +123,25 @@ class LocationController extends Controller
         // die();
         
         return $this->show($request, $location);
+    }
+
+    private function getApiaryLimit()
+    {
+        // Get the user's plan type
+        $planType = auth()->user()->subscription->planType;
+
+        // Return the apiary limit based on the plan type
+        switch ($planType->name) {
+            case 'basic':
+                return 1;
+            case 'pro':
+                return 5;
+            case 'advanced':
+            case 'research':
+                return null;
+            default:
+                return 1;
+        }
     }
 
     /**

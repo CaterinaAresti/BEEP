@@ -66,6 +66,18 @@ class ChecklistController extends Controller
      */
     public function store(Request $request)
     {
+        // Get the user's current checklists
+        $checklists = Checklist::where('user_id', auth()->id())->get();
+
+        // Get the checklist limit
+        $limit = $this->getChecklistLimit();
+        
+        // Check if the user has reached the limit
+        if ($limit !== null && $checklists->count() >= $limit)
+        {
+            // Return an error message
+            return response()->json(['error' => 'You have reached the maximum number of checklists.'], 422);
+        }
         
         $requestData = $request->except(['user_id']);
         $checklist   = Checklist::create($requestData);
@@ -80,6 +92,25 @@ class ChecklistController extends Controller
 
         return redirect('checklists')->with('flash_message', 'Checklist added!');
     }
+
+    private function getChecklistLimit()
+{
+    // Get the user's subscription level
+    $planType = auth()->user()->subscription->plan_type;
+
+    // Return the checklist limit based on the subscription level
+    switch ($subscriptionLevel) {
+        case 'basic':
+            return 1;
+        case 'pro':
+            return 5;
+        case 'advanced':
+        case 'research':
+            return null;
+        default:
+            return 1;
+    }
+}
 
     /**
      * Display the specified resource.

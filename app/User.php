@@ -80,7 +80,7 @@ class User extends Authenticatable
         return $permissions;
     }
 
-
+    
     // links
     public function images()
     {
@@ -353,6 +353,6 @@ class User extends Authenticatable
     }
 
     public function subscriptions() {
-        return $this->hasMany(Subscription::class);
+        return $this->hasOne(Subscription::class);
     }
 }

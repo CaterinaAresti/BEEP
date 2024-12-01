@@ -146,7 +146,34 @@ class HiveController extends Controller
         $hive = $this->hiveFactory->createHive($user_id, $location, $name, $hive_type_id, $color, $broodLayerAmount, $honeyLayerAmount, $frameAmount, $bb_width_cm, $bb_depth_cm, $bb_height_cm, $fr_width_cm, $fr_height_cm, $order, $layers);
         $hive = $this->saveQueen($request, $hive);
 
+        $hives = Hive::where('user_id', auth()->id())->get();
+        $limit = $this->getHiveLimit();
+
+    if ($limit !== null && $hives->count() >= $limit)
+    {
+        return response()->json(['error'=>'hive limit reached'], 403);
+    }
+
         return $this->show($request, $hive);
+    }
+
+    private function getHiveLimit()
+    {
+        // Get the user's plan type
+        $planType = auth()->user()->subscription->planType;
+
+        // Return the hive limit based on the plan type
+        switch ($planType->name) {
+            case 'basic':
+                return 1;
+            case 'pro':
+                return 5;
+            case 'advanced':
+            case 'research':
+                return null;
+            default:
+                return 1;
+        }
     }
 
     /**
