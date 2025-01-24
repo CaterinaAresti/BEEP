@@ -168,26 +168,28 @@ Route::group(
 		Route::get('research/{id}/edit',	['as'=>'research.edit','uses'=>'ResearchController@edit']);
 		Route::patch('research/{id}',		['as'=>'research.update','uses'=>'ResearchController@update']);
 		Route::delete('research/{id}',		['as'=>'research.destroy','uses'=>'ResearchController@destroy']);
-	}
 
-	// Subscription system
-	/*
-	Automatic Hive Monitoring
-		Route::get('/connect-beep-base', 'HiveMonitoringController@connectBeepBase')->middleware('check-subscription:1,2,3,4');
-		Route::get('/access-sensor-data', 'HiveMonitoringController@accessSensorData')->middleware('check-subscription:1,2,3,4');
-		Route::get('/download-data', 'HiveMonitoringController@downloadData')->middleware('check-subscription:1,2,3,4');
-		Route::get('/data-storage', 'HiveMonitoringController@dataStorage')->middleware('check-subscription:1,2,3,4');
-		Route::get('/connect-supported-third-party-hive-monitors', 'HiveMonitoringController@connectThirdPartyMonitors')->middleware('check-subscription:2,3,4');
-		Route::get('/offline-data-entry', 'HiveMonitoringController@offlineDataEntry')->middleware('check-subscription:1,2,3,4');
 
-	Advanced: Data Analysis and Alerts (Data Use)
-		Route::get('/compare-hives', 'DataAnalysisController@compareHives')->middleware('check-subscription:2,3,4');
-		Route::get('/net-weight-calculation', 'DataAnalysisController@netWeightCalculation')->middleware('check-subscription:2,3,4');
-		DONE DONE DONE Route::post('/set-alert-rules', 'Api\AlertRuleController@store')->middleware('check-subscription:2,3,4');
-		Route::get('/access-data-analysis-models', 'DataAnalysisController@accessDataAnalysisModels')->middleware('check-subscription:2,3,4');
-		Route::get('/beep-database-access', 'DataAnalysisController@beepDatabaseAccess')->middleware('check-subscription:2,3,4');
+	/*-----------------------
+	** SUBSCRIPTION SYSTEM **
+	-----------------------*/
 	
-	Beep digital logbook / BEEP app DONE DONE DONE DONE
+	// Automatic Hive Monitoring
+		Route::get('/connect-beep-base', 'DeviceController@create')->middleware('check-subscription:1,2,3,4');
+		Route::get('/access-sensor-data', 'MeasurementController@data')->middleware('check-subscription:1,2,3,4');
+		Route::get('/download-data', 'FlashLogController@exportData')->middleware('check-subscription:1,2,3,4');
+		Route::get('/data-storage', 'DeviceController@store')->middleware('check-subscription:1,2,3,4');
+		//Route::get('/connect-supported-third-party-hive-monitors', 'ControllerName@FunctionName')->middleware('check-subscription:2,3,4');
+		// new feature, doesn't exist yet Route::get('/offline-data-entry', 'ControllerName@FunctionName')->middleware('check-subscription:1,2,3,4');
+
+	// Advanced: Data Analysis and Alerts (Data Use)
+		// new feature, doesn't exist yet Route::get('/compare-hives', 'DataAnalysisController@comparedata')->middleware('check-subscription:2,3,4');
+		// new feature, doesn't exist yet Route::get('/net-weight-calculation', 'ControllerName@FunctionName')->middleware('check-subscription:2,3,4');
+		Route::post('/set-alert-rules', 'Api\AlertRuleController@store')->middleware('check-subscription:2,3,4');
+		Route::get('/access-data-analysis-models', 'DataAnalysisController@accessDataAnalysisModels')->middleware('check-subscription:2,3,4'); //could not find function
+		Route::get('/beep-database-access', 'DataAnalysisController@beepDatabaseAccess')->middleware('check-subscription:2,3,4'); //could not find function
+	
+	// Beep digital logbook / BEEP app
 		Route::get('/apiaries', 'Api/LocationController@store')->middleware('check-subscription:1,2,3,4');
 		Route::get('/hives', 'Api/HiveController@store')->middleware('check-subscription:1,2,3,4');
 		Route::get('/inspection-checklists', 'ChecklistController@store')->middleware('check-subscription:1,2,3,4');
@@ -195,20 +197,20 @@ Route::group(
 		Route::get('/inspections', 'InspectionsController@index')->middleware('check-subscription:1,2,3,4');
 		Route::get('/language-selection', 'LanguageController@index')->middleware('check-subscription:1,2,3,4');
 
-	Collaboration Groups DONE DONE DONE DONE
+	// Collaboration Groups
 		Route::get('/collaboration-groups', 'Api/GroupController@index')->middleware('check-subscription:2,3,4');
 
-	BEEP Dashboard DONE DONE DONE DONE
+	// BEEP Dashboard
 		Route::get('/beep-dashboard', 'DashboardController@index')->middleware('check-subscription:3,4');
 
-	Research Projects
-		DONE DONE Route::get('/research-projects', 'ResearchController@index')->middleware('check-subscription:4');
-		Route::get('/invite-research-participants', 'ResearchController@inviteResearchParticipants')->middleware('check-subscription:4');
-		Route::get('/add-research-checklist', 'ResearchController@addResearchChecklist')->middleware('check-subscription:4');
+	// Research Projects
+		Route::get('/research-projects', 'ResearchController@store')->middleware('check-subscription:4');
+		Route::get('/invite-research-participants', 'ResearchController@inviteResearchParticipants')->middleware('check-subscription:4'); //could not find function
+		Route::get('/add-research-checklist', 'ResearchController@addResearchChecklist')->middleware('check-subscription:4'); //could not find function
 		Route::get('/add-protocol', 'ResearchController@addProtocol')->middleware('check-subscription:4');
-		Route::get('/monitor-data-collection', 'ResearchController@monitorDataCollection')->middleware('check-subscription:4');
-		Route::get('/sample-collection-and-result-sharing', 'ResearchController@sampleCollectionAndResultSharing')->middleware('check-subscription:4');
-		Route::get('/adding-an-algorithm-or-prediction-model', 'ResearchController@addingAnAlgorithmOrPredictionModel')->middleware('check-subscription:4');
-		DONE DONE Route::get('/download-data-research-participants', 'ResearchController@show')->middleware('check-subscription:4');
-	*/
-);
+		Route::get('/monitor-data-collection', 'ResearchController@show')->middleware('check-subscription:4');
+		Route::get('/sample-collection-and-result-sharing', 'ResearchController@getSampleCodes'/* could also be 'ResearchController@show'*/)->middleware('check-subscription:4');
+		// new feature, doesn't exist yet Route::get('/adding-an-algorithm-or-prediction-model', 'ResearchController@FunctionName')->middleware('check-subscription:4');
+		Route::get('/download-data-research-participants', 'ResearchController@show')->middleware('check-subscription:4');
+	
+	});

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\PostLocationRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
+use App\Subscription;
 
 use Validator;
 
@@ -59,7 +60,7 @@ class LocationController extends Controller
     public function store(Request $request)
     {
         // Get the user's current apiaries
-        $apiaries = Apiary::where('user_id', auth()->id())->get();
+        $apiaries = Location::where('user_id', auth()->id())->get();
 
         // Get the apiary limit
         $limit = $this->getApiaryLimit();
@@ -128,16 +129,17 @@ class LocationController extends Controller
     private function getApiaryLimit()
     {
         // Get the user's plan type
-        $planType = auth()->user()->subscription->planType;
+        $subscription = Subscription::where('user_id', auth()->id())->first();
+        $planTypeId = $subscription->plan_type_id;
 
         // Return the apiary limit based on the plan type
-        switch ($planType->name) {
-            case 'basic':
+        switch ($planTypeId->id) {
+            case '1':
                 return 1;
-            case 'pro':
+            case '2':
                 return 5;
-            case 'advanced':
-            case 'research':
+            case '3':
+            case '4':
                 return null;
             default:
                 return 1;

@@ -16,4 +16,23 @@ class Subscription extends Model
     public function planType() {
         return $this->belongsTo(PlanType::class);
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($subscription) {
+            // Automatically set plan_type_id to 'basic' if not provided
+            if (!$subscription->plan_type_id) {
+                $basicPlan = PlanType::where('name', 'basic')->first();
+
+                if ($basicPlan) {
+                    $subscription->plan_type_id = $basicPlan->id;
+                } else {
+                    \Log::error('Basic plan not found in PlanType table');
+                    throw new \Exception('Default "basic" plan is missing');
+                }
+            }
+        });
+    }
 }
